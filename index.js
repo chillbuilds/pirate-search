@@ -1,5 +1,7 @@
 const inquirer = require('inquirer')
+const term = require( 'terminal-kit' ).terminal
 const Petrus = require('petrus')
+const open = require('open')
 
 function startPrompt() {
     inquirer.prompt([{
@@ -29,7 +31,11 @@ function search(query, quantity) {
         let rawFinal = rawTitleArr[0]
         let spaceArr = rawFinal.split('+')
         let titleStr = spaceArr.join(' ')
-        let obj = {title: titleStr, size: results[i].size, seeds: results[i].seeder}
+        let titleTidy = titleStr.split('&amp')
+        let ditchDotsRaw = titleTidy[0]
+        let ditchDots = ditchDotsRaw.split('.')
+        let ditchDotsParse = ditchDots.join(' ')
+        let obj = {title: ditchDotsParse, size: results[i].size, seeds: results[i].seeder}
         objArr.push(obj)
         linkArr.push(link)
     }
@@ -46,19 +52,38 @@ function titleSelect(dataObj, linkArr) {
         let str = `${dataObj[i].title} - Size: ${dataObj[i].size} - Seeds: ${dataObj[i].seeds}`
         parseArr.push(str)
     }
+    let promptArr = parseArr
+    promptArr.push('Search Again')
+    promptArr.push('Exit Application')
     inquirer.prompt({
-        type: "list",
-        choices: parseArr,
-        message: "Which would you like to download?",
+        type: 'list',
+        choices: promptArr,
+        message: 'Which would you like to download?',
         name: 'mediaChoice'
     }).then(function(data){
+        switch (data.mediaChoice){
+            case 'Search Again':
+                startPrompt()
+                break
+            case 'Exit Application':
+                break
+            default:
         for( var i = 0; i < parseArr.length; i++){
             if(data.mediaChoice === parseArr[i]){
-                console.log(parseArr[i])
-                console.log(linkArr[i])
+                openLink(linkArr[i])
             }
         }
-    })
+    }})
 }
 
-startPrompt()
+async function openLink (link) {
+    await open(link).then(
+        startPrompt()
+    )
+}
+
+term.drawImage( './assets/images/ship.PNG' ,  function(err){
+    if(err){console.log(err)}
+} )
+
+setTimeout(function(){ startPrompt() }, 2400)
